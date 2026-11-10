@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ইসলাম বাংলা — সুপার অ্যাডমিন প্যানেল</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- FIREBASE INITIALIZATION -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-analytics.js";
+
+      // আপনার একই ফায়ারবেস কনফিগারেশন (যাতে ইউজার প্যানেল ও অ্যাডমিন প্যানেল একই সার্ভারে যুক্ত থাকে)
+      const firebaseConfig = {
+        apiKey: "AIzaSyCDdvOotHAj1LHPNXYj_OFK7sddC9PaqPk",
+        authDomain: "islam-bangla.firebaseapp.com",
+        projectId: "islam-bangla",
+        storageBucket: "islam-bangla.firebasestorage.app",
+        messagingSenderId: "804089398471",
+        appId: "1:804089398471:web:a46ac73dc3a6f5c7452ae2",
+        measurementId: "G-8V26FYY3FF"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      window.firebaseApp = app;
+      try { getAnalytics(app); } catch (e) {}
+    </script>
+
+    <style>
+        * {
+            font-family: 'Noto Sans Bengali', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .admin-bg {
+            background-color: #04140e;
+            background-image: radial-gradient(#10b981 0.75px, transparent 0.75px), radial-gradient(#d97706 0.75px, #04140e 0.75px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+            background-attachment: fixed;
+        }
+        .royal-card {
+            background: linear-gradient(145deg, #09261c 0%, #051912 100%);
+            border: 1.5px solid #1c5e46;
+            box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6);
+        }
+    </style>
+</head>
+<body class="admin-bg text-white min-h-screen flex flex-col antialiased selection:bg-amber-400 selection:text-slate-950 pb-20">
+
+    <!-- ================= 1. অ্যাডমিন লগইন গেট (শুধুমাত্র অ্যাডমিন লগইন করতে পারবে) ================= -->
+    <div id="adminAuthGate" class="fixed inset-0 z-50 flex items-center justify-center bg-[#020d09]/95 backdrop-blur-md p-4">
+        <div class="w-full max-w-md rounded-3xl border-2 border-amber-400/60 bg-[#08271c] p-6 sm:p-8 shadow-2xl relative">
+            <div class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-amber-400 bg-emerald-950 shadow-xl text-amber-300">
+                <i data-lucide="shield-alert" class="w-10 h-10"></i>
+            </div>
+            <h2 class="text-center text-2xl font-black text-amber-300">ইসলাম বাংলা অ্যাডমিন</h2>
+            <p class="mt-1 text-center text-xs text-emerald-200">শুধুমাত্র অনুমোদিত অ্যাডমিন এখানে লগইন করতে পারবেন</p>
+
+            <form id="adminLoginForm" class="mt-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-emerald-200 mb-1">অ্যাডমিন Gmail / ইমেইল</label>
+                    <input id="adminEmailInput" type="email" required placeholder="admin123321@gmail.com" class="w-full rounded-xl border border-emerald-700 bg-[#031a12] p-3 text-white text-sm outline-none focus:border-amber-400">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-emerald-200 mb-1">সিক্রেট পাসওয়ার্ড</label>
+                    <input id="adminPassInput" type="password" required placeholder="পাসওয়ার্ড লিখুন" class="w-full rounded-xl border border-emerald-700 bg-[#031a12] p-3 text-white text-sm outline-none focus:border-amber-400">
+                </div>
+                <button id="adminLoginBtn" type="submit" class="w-full rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 p-3 font-black text-slate-950 text-sm hover:brightness-110 active:scale-95 transition shadow-lg flex items-center justify-center gap-2">
+                    <i data-lucide="lock-keyhole" class="w-4 h-4"></i> ড্যাশবোর্ডে প্রবেশ করুন
+                </button>
+                <p id="adminLoginStatus" class="min-h-5 text-center text-xs font-bold text-amber-200"></p>
+            </form>
+            <div class="mt-4 pt-3 border-t border-emerald-800 text-center text-[11px] text-emerald-400">
+                অনুমোদিত ক্রেডেনশিয়াল ছাড়া কেউ এই প্যানেলে প্রবেশ করতে পারবে না।
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 2. মেইন অ্যাডমিন কন্ট্রোল প্যানেল ================= -->
+    <div id="adminMainDashboard" class="hidden">
+        <!-- শীর্ষ হেডার -->
+        <header class="sticky top-0 z-40 bg-[#061e16]/95 backdrop-blur-md border-b-2 border-amber-500/40 px-4 py-3 shadow-2xl">
+            <div class="max-w-5xl mx-auto flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-400 flex items-center justify-center text-amber-300">
+                        <i data-lucide="shield-check" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-black text-amber-300">ইসলাম বাংলা — অ্যাডমিন কনসোল</h1>
+                        <p class="text-[11px] text-emerald-300 font-semibold" id="adminInfoLabel">লগইনরত: admin123321@gmail.com</p>
+                    </div>
+                </div>
+                <button onclick="logoutAdmin()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600/90 hover:bg-red-500 font-bold text-xs text-white shadow transition">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> লগআউট
+                </button>
+            </div>
+        </header>
+
+        <!-- মূল কন্টেন্ট -->
+        <main class="max-w-5xl mx-auto w-full px-4 pt-6 space-y-6">
+
+            <!-- নোটিফিকেশন এলার্ট বার -->
+            <p id="globalNoticeText" class="min-h-5 text-center text-sm font-bold text-amber-300 transition-all"></p>
+
+            <!-- ট্যাব নেভিগেশন বাটন -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 border-b border-emerald-700/60 pb-3">
+                <button onclick="switchTab('dashboard')" id="tabBtn-dashboard" class="rounded-xl bg-amber-400 px-3 py-2.5 text-xs sm:text-sm font-black text-slate-950 shadow">
+                    ড্যাশবোর্ড ও নোটিশ
+                </button>
+                <button onclick="switchTab('users')" id="tabBtn-users" class="rounded-xl border border-emerald-600/60 bg-[#08271c] px-3 py-2.5 text-xs sm:text-sm font-bold text-emerald-100">
+                    ইউজার ম্যানেজমেন্ট
+                </button>
+                <button onclick="switchTab('stories')" id="tabBtn-stories" class="rounded-xl border border-emerald-600/60 bg-[#08271c] px-3 py-2.5 text-xs sm:text-sm font-bold text-emerald-100">
+                    সিরাত কাহিনি
+                </button>
+                <button onclick="switchTab('videos')" id="tabBtn-videos" class="rounded-xl border border-emerald-600/60 bg-[#08271c] px-3 py-2.5 text-xs sm:text-sm font-bold text-emerald-100">
+                    ভিডিও আপলোড/লিংক
+                </button>
+            </div>
+
+            <!-- ================= ট্যাব ১: ড্যাশবোর্ড ও অ্যাপ নোটিশ ব্রডকাস্ট ================= -->
+            <div id="tabContent-dashboard" class="space-y-6">
+                <!-- স্ট্যাটাস কাউন্টার কার্ডসমূহ -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="royal-card p-5 rounded-2xl border-2 border-amber-400/50 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-emerald-300 block font-semibold">অ্যাপের মোট নিবন্ধিত ইউজার</span>
+                            <span id="statTotalUsers" class="text-3xl font-black text-amber-300">০</span>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-amber-400/20 text-amber-300 flex items-center justify-center">
+                            <i data-lucide="users" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+
+                    <div class="royal-card p-5 rounded-2xl border-2 border-emerald-500/50 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-emerald-300 block font-semibold">প্রকাশিত সিরাত কাহিনি</span>
+                            <span id="statTotalStories" class="text-3xl font-black text-emerald-300">০</span>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center">
+                            <i data-lucide="book-open" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+
+                    <div class="royal-card p-5 rounded-2xl border-2 border-teal-500/50 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-emerald-300 block font-semibold">প্রকাশিত সিরাত ভিডিও</span>
+                            <span id="statTotalVideos" class="text-3xl font-black text-teal-300">০</span>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-teal-500/20 text-teal-300 flex items-center justify-center">
+                            <i data-lucide="video" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ইউজার অ্যাপে লাইভ নোটিশ পাঠানোর সিস্টেম -->
+                <div class="royal-card p-6 rounded-3xl border-2 border-amber-400/40 space-y-3">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="megaphone" class="w-5 h-5 text-amber-400"></i>
+                        <h3 class="text-base sm:text-lg font-black text-amber-300">ইউজার অ্যাপের লাইভ ব্রডকাস্ট নোটিশ</h3>
+                    </div>
+                    <p class="text-xs text-emerald-200 leading-relaxed">
+                        এখানে আপনি যে মেসেজ লিখে সেভ করবেন, অ্যাপ ওপেন করলেই সকল ইউজারদের হোম স্ক্রিনে বিশেষ নোটিশ হিসেবে তা ভেসে উঠবে। নোটিশ বন্ধ করতে চাইলে ইনপুট বক্স খালি করে সেভ করুন।
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-2.5 pt-2">
+                        <input id="broadcastInput" placeholder="যেমন: নতুন সিরাত কাহিনি এবং ভিডিও যুক্ত করা হয়েছে..." class="flex-1 rounded-xl border border-emerald-700 bg-[#031a12] p-3 text-sm text-white focus:border-amber-400 outline-none">
+                        <button onclick="saveBroadcastNotice()" class="rounded-xl bg-amber-400 px-6 py-3 font-black text-slate-950 text-sm hover:bg-amber-300 transition shadow flex items-center justify-center gap-2">
+                            <i data-lucide="send" class="w-4 h-4"></i> নোটিশ আপডেট করুন
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= ট্যাব ২: ইউজার ম্যানেজমেন্ট ================= -->
+            <div id="tabContent-users" class="hidden space-y-4">
+                <div class="flex items-center justify-between bg-[#08271c] p-4 rounded-2xl border border-emerald-700/50">
+                    <div>
+                        <h3 class="font-black text-amber-300 text-base">অ্যাপ ব্যবহারকারীদের তালিকা</h3>
+                        <p class="text-xs text-emerald-200">নিবন্ধিত সকল সাধারণ ইউজারের প্রোফাইল ডাটা</p>
+                    </div>
+                    <button onclick="loadUsersList()" class="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-800 text-emerald-100 rounded-xl text-xs font-bold hover:bg-emerald-700 transition">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> রিফ্রেশ
+                    </button>
+                </div>
+
+                <div id="usersListContainer" class="space-y-2.5 max-h-[65vh] overflow-y-auto pr-1">
+                    <p class="text-center text-xs text-emerald-200 p-8">ইউজারদের ডাটা লোড হচ্ছে...</p>
+                </div>
+            </div>
+
+            <!-- ================= ট্যাব ৩: সিরাত কাহিনি তৈরি ও ম্যানেজ ================= -->
+            <div id="tabContent-stories" class="hidden space-y-6">
+                <div class="royal-card p-5 sm:p-6 rounded-3xl border-2 border-amber-400/50 shadow-2xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-emerald-800 pb-3">
+                        <h3 id="storyFormTitle" class="text-base sm:text-lg font-black text-amber-300 flex items-center gap-2">
+                            <i data-lucide="pen-tool" class="w-5 h-5 text-amber-400"></i> নতুন কাহিনি লিখুন
+                        </h3>
+                        <span class="text-xs text-emerald-300">সরাসরি ইউজার অ্যাপে যুক্ত হবে</span>
+                    </div>
+
+                    <input id="storyTitleInput" maxlength="200" placeholder="কাহিনির আকর্ষণীয় শিরোনাম (যেমন: মিরাজের ঐতিহাসিক সফর)" class="w-full rounded-xl border border-emerald-700 bg-[#031a12] p-3 text-sm text-white focus:border-amber-400 outline-none">
+                    
+                    <textarea id="storyBodyInput" rows="9" maxlength="30000" placeholder="সম্পূর্ণ কাহিনি বিস্তারিত এখানে লিখুন..." class="w-full rounded-xl border border-emerald-700 bg-[#031a12] p-3 text-sm text-white focus:border-amber-400 outline-none leading-relaxed"></textarea>
+
+                    <div class="flex gap-2">
+                        <button id="storySaveBtn" onclick="saveStory()" class="flex-1 rounded-xl bg-amber-400 p-3 font-black text-slate-950 text-sm hover:bg-amber-300 transition shadow flex items-center justify-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i> কাহিনি প্রকাশ করুন
+                        </button>
+                        <button onclick="resetStoryForm()" class="rounded-xl border border-emerald-600 px-4 font-bold text-xs text-emerald-200 hover:bg-emerald-900 transition">
+                            রিসেট
+                        </button>
+                    </div>
+                </div>
+
+                <!-- প্রকাশিত কাহিনির তালিকা -->
+                <div class="royal-card p-5 rounded-3xl border border-emerald-600/40 space-y-3">
+                    <h3 class="text-sm font-black text-amber-300">প্রকাশিত কাহিনিসমূহ</h3>
+                    <div id="adminStoriesList" class="space-y-2.5">
+                        <p class="text-xs text-emerald-200">কাহিনি লোড হচ্ছে...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= ট্যাব ৪: ভিডিও ম্যানেজমেন্ট (ফ্রি সার্ভার ও ইউটিউব) ================= -->
+            <div id="tabContent-videos" class="hidden space-y-6">
+                <div class="royal-card p-5 sm:p-6 rounded-3xl border-2 border-amber-400/50 shadow-2xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-emerald-800 pb-3">
+                        <h3 id="videoFormTitle" class="text-base sm:text-lg font-black text-amber-300 flex items-center gap-2">
+                            <i data-lucide="video" class="w-5 h-5 text-amber-400"></i> নতুন ভিডিও যোগ করুন
+                        </h3>
+                        <span class="text-xs text-emerald-300">ফ্রি সার্ভার ও ইউটিউব সাপোর্টেড</span>
+                    </div>
+
+                    <input id="videoTitleInput" maxlength="200" placeholder="ভিডিওর শিরোনাম (যেমন: মক্কা বিজয়ের শিক্ষণীয় বিবরণ)" class="w-full rounded-xl border border-emerald-700 bg-[#031a12] p-3 text-sm text-white focus:border-amber-400 outline-none">
+                    
+                    <input id="videoUrlInput" type="url" placeholder="ভিডিও লিংক (YouTube / Shorts লিংক অথবা ডিরেক্ট MP4 ফাইল লিংক)" class="w-full rounded-xl border border-emerald-700 bg-[#031a12] p-3 text-sm text-white focus:border-amber-400 outline-none">
+
+                    <!-- ফ্রি সার্ভার গাইডলাইন কার্ড -->
+                    <div class="p-4 rounded-2xl bg-[#031710] border border-amber-400/40 text-xs text-emerald-100 space-y-2">
+                        <div class="font-bold text-amber-300 flex items-center gap-1.5">
+                            <i data-lucide="info" class="w-4 h-4"></i> ভিডিও আপলোডের সম্পূর্ণ ফ্রি পদ্ধতি:
+                        </div>
+                        <p>১. <b>ইউটিউব ভিডিও / শর্টস:</b> যেকোনো ইউটিউব ভিডিওর নরমাল বা শর্টস লিংক এনে দিলেই ইউজার প্যানেলের ভেতরে এটি সুন্দর প্লেয়ারে চলবে।</p>
+                        <p>২. <b>ফ্রি ক্লাউড ফাইল হোস্টিং:</b> আপনার যদি মোবাইল/পিসিতে তৈরি করা MP4 ভিডিও থাকে, তবে ফ্রিতে <a href="https://catbox.moe" target="_blank" class="text-amber-300 underline font-bold">Catbox.moe</a> অথবা <a href="https://streamable.com" target="_blank" class="text-amber-300 underline font-bold">Streamable.com</a>-এ আপলোড করে পাওয়া ডিরেক্ট লিংকটি দিন। অ্যাপের ভেতরের ফুল এইচডি প্লেয়ারে সম্পূর্ণ ফ্রিতে সরাসরি প্লে হবে!</p>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button id="videoSaveBtn" onclick="saveVideo()" class="flex-1 rounded-xl bg-amber-400 p-3 font-black text-slate-950 text-sm hover:bg-amber-300 transition shadow flex items-center justify-center gap-2">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i> ভিডিও সেভ করুন
+                        </button>
+                        <button onclick="resetVideoForm()" class="rounded-xl border border-emerald-600 px-4 font-bold text-xs text-emerald-200 hover:bg-emerald-900 transition">
+                            রিসেট
+                        </button>
+                    </div>
+                </div>
+
+                <!-- প্রকাশিত ভিডিও তালিকা -->
+                <div class="royal-card p-5 rounded-3xl border border-emerald-600/40 space-y-3">
+                    <h3 class="text-sm font-black text-amber-300">প্রকাশিত ভিডিওসমূহ</h3>
+                    <div id="adminVideosList" class="space-y-2.5">
+                        <p class="text-xs text-emerald-200">ভিডিও লোড হচ্ছে...</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ================= FIREBASE BACKEND JAVASCRIPT LOGIC ================= -->
+    <script type="module">
+      import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+      import { getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, updateDoc, deleteDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+      const app = window.firebaseApp;
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // আপনার নির্দিষ্ট করা অ্যাডমিন ক্রেডেনশিয়াল
+      const TARGET_ADMIN_EMAIL = 'admin123321@gmail.com';
+      const TARGET_ADMIN_PASS  = '098890';
+
+      let currentAdminUser = null;
+      let storiesData = [], videosData = [], usersData = [];
+      let editingStoryId = null, editingVideoId = null;
+
+      const esc = str => String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const toBn = n => String(n ?? '').replace(/[0-9]/g, d => ['০','১','২','৩','৪','৫','৬','৭','৮','৯'][d]);
+
+      function setNotice(msg, isErr = false) {
+        const el = document.getElementById('globalNoticeText');
+        if(!el) return;
+        el.textContent = msg;
+        el.className = `min-h-5 text-center text-sm font-bold ${isErr ? 'text-red-400' : 'text-amber-300'}`;
+        setTimeout(() => { if(el.textContent === msg) el.textContent = ''; }, 4500);
+      }
+
+      // ================= ১. অ্যাডমিন লগইন সিস্টেম =================
+      document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('adminEmailInput').value.trim();
+        const pass = document.getElementById('adminPassInput').value;
+        const statusEl = document.getElementById('adminLoginStatus');
+        const btn = document.getElementById('adminLoginBtn');
+
+        // নিরাপত্তা যাচাই
+        if(email.toLowerCase() !== TARGET_ADMIN_EMAIL.toLowerCase() || pass !== TARGET_ADMIN_PASS) {
+          statusEl.textContent = "ভুল ইমেইল বা পাসওয়ার্ড! শুধুমাত্র অ্যাডমিন প্রবেশ করতে পারবেন।";
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "যাচাই হচ্ছে...";
+        statusEl.textContent = "সার্ভারের সাথে সংযোগ নেওয়া হচ্ছে...";
+
+        try {
+          // প্রথমে সাইন ইন করার চেষ্টা
+          await signInWithEmailAndPassword(auth, email, pass);
+        } catch(err) {
+          // যদি একাউন্ট পূর্বে তৈরি না থাকে, তবে অটো রেজিস্টার হবে
+          if(err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+            try {
+              const newCred = await createUserWithEmailAndPassword(auth, TARGET_ADMIN_EMAIL, TARGET_ADMIN_PASS);
+              await setDoc(doc(db, 'users', newCred.user.uid), {
+                email: TARGET_ADMIN_EMAIL,
+                displayName: 'সুপার অ্যাডমিন',
+                role: 'admin',
+                createdAt: serverTimestamp()
+              }, { merge: true });
+            } catch(createErr) {
+              statusEl.textContent = "লগইন ব্যর্থ: " + createErr.message;
+              btn.disabled = false;
+              return;
+            }
+          } else {
+            statusEl.textContent = "সমস্যা: " + err.message;
+            btn.disabled = false;
+            return;
+          }
+        }
+      });
+
+      // লগআউট
+      window.logoutAdmin = async () => {
+        await signOut(auth);
+        document.getElementById('adminMainDashboard').classList.add('hidden');
+        document.getElementById('adminAuthGate').classList.remove('hidden');
+      };
+
+      // ট্যাব পরিবর্তন ফাংশন
+      window.switchTab = (tabName) => {
+        ['dashboard', 'users', 'stories', 'videos'].forEach(t => {
+          const btn = document.getElementById(`tabBtn-${t}`);
+          const content = document.getElementById(`tabContent-${t}`);
+          if(t === tabName) {
+            btn.className = "rounded-xl bg-amber-400 px-3 py-2.5 text-xs sm:text-sm font-black text-slate-950 shadow";
+            content.classList.remove('hidden');
+          } else {
+            btn.className = "rounded-xl border border-emerald-600/60 bg-[#08271c] px-3 py-2.5 text-xs sm:text-sm font-bold text-emerald-100";
+            content.classList.add('hidden');
+          }
+        });
+        if(tabName === 'users') loadUsersList();
+      };
+
+      // ================= ২. সব ডেটা লোড ও সিঙ্ক =================
+      async function loadAllAdminData() {
+        try {
+          const [storiesSnap, videosSnap, usersSnap, noticeSnap] = await Promise.all([
+            getDocs(query(collection(db, 'siratStories'), orderBy('createdAt', 'desc'))),
+            getDocs(query(collection(db, 'siratVideos'), orderBy('createdAt', 'desc'))),
+            getDocs(collection(db, 'users')),
+            getDoc(doc(db, 'appConfig', 'announcement')).catch(()=>null)
+          ]);
+
+          storiesData = storiesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+          videosData  = videosSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+          usersData   = usersSnap.docs.map(d => ({ uid: d.id, ...d.data() }));
+
+          // ড্যাশবোর্ড কাউন্টার আপডেট
+          document.getElementById('statTotalStories').textContent = toBn(storiesData.length);
+          document.getElementById('statTotalVideos').textContent  = toBn(videosData.length);
+          document.getElementById('statTotalUsers').textContent   = toBn(usersData.length);
+
+          // নোটিশ ইনপুট সেট
+          if(noticeSnap && noticeSnap.exists() && noticeSnap.data().text) {
+            document.getElementById('broadcastInput').value = noticeSnap.data().text;
+          }
+
+          renderStoriesAdminList();
+          renderVideosAdminList();
+          lucide.createIcons();
+        } catch(e) {
+          console.error("Data load failed:", e);
+        }
+      }
+
+      // ব্রডকাস্ট নোটিশ সেভ
+      window.saveBroadcastNotice = async () => {
+        const txt = document.getElementById('broadcastInput').value.trim();
+        try {
+          await setDoc(doc(db, 'appConfig', 'announcement'), {
+            text: txt,
+            updatedAt: serverTimestamp()
+          });
+          setNotice('ইউজার অ্যাপের লাইভ নোটিশ সফলভাবে আপডেট হয়েছে!');
+        } catch(e) {
+          setNotice('নোটিশ সেভ করা যায়নি: ' + e.message, true);
+        }
+      };
+
+      // ================= ৩. ইউজার তালিকা লোড ও রিমুভ =================
+      window.loadUsersList = async () => {
+        const box = document.getElementById('usersListContainer');
+        box.innerHTML = `<p class="text-center text-xs text-amber-300 p-6">ইউজার ডাটা রিফ্রেশ হচ্ছে...</p>`;
+        try {
+          const snap = await getDocs(collection(db, 'users'));
+          usersData = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+          document.getElementById('statTotalUsers').textContent = toBn(usersData.length);
+
+          if(!usersData.length) {
+            box.innerHTML = `<p class="text-center text-xs text-emerald-200 p-6">এখনো কোনো ইউজার পাওয়া যায়নি।</p>`;
+            return;
+          }
+
+          box.innerHTML = usersData.map(u => `
+            <div class="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-black/30 border border-emerald-700/50">
+              <div class="min-w-0">
+                <div class="text-sm font-bold text-amber-200 flex items-center gap-2">
+                  ${esc(u.displayName || 'নামহীন ইউজার')}
+                  ${(u.email||'').toLowerCase() === TARGET_ADMIN_EMAIL.toLowerCase() ? '<span class="text-[10px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.5 rounded">ADMIN</span>' : ''}
+                </div>
+                <div class="text-xs text-emerald-300 truncate">${esc(u.email || u.uid)}</div>
+              </div>
+              ${(u.email||'').toLowerCase() !== TARGET_ADMIN_EMAIL.toLowerCase() ? `
+                <button onclick="deleteUser('${u.uid}')" class="px-3 py-1.5 bg-red-600/80 hover:bg-red-500 text-white rounded-lg text-xs font-bold shrink-0 transition">
+                  ডাটা মুছুন
+                </button>
+              ` : '<span class="text-xs text-emerald-400 font-bold shrink-0">মূল অ্যাডমিন</span>'}
+            </div>
+          `).join('');
+          lucide.createIcons();
+        } catch(e) {
+          box.innerHTML = `<p class="text-center text-xs text-red-400 p-6">লোড ব্যর্থ: ${e.message}</p>`;
+        }
+      };
+
+      window.deleteUser = async (uid) => {
+        if(!confirm('আপনি কি এই ইউজারের তথ্য ডাটাবেস থেকে মুছে ফেলতে চান?')) return;
+        try {
+          await deleteDoc(doc(db, 'users', uid));
+          setNotice('ইউজার সফলভাবে মুছে ফেলা হয়েছে।');
+          loadUsersList();
+        } catch(e) {
+          setNotice('মুছতে সমস্যা হয়েছে: ' + e.message, true);
+        }
+      };
+
+      // ================= ৪. সিরাত কাহিনি ম্যানেজমেন্ট =================
+      window.saveStory = async () => {
+        const title = document.getElementById('storyTitleInput').value.trim();
+        const body  = document.getElementById('storyBodyInput').value.trim();
+        if(!title || !body) return setNotice('শিরোনাম ও কাহিনি দুটোই পূরণ করুন!', true);
+
+        try {
+          const payload = { title, body, published: true, updatedAt: serverTimestamp() };
+          if(editingStoryId) {
+            await updateDoc(doc(db, 'siratStories', editingStoryId), payload);
+            setNotice('কাহিনি সফলভাবে আপডেট করা হয়েছে!');
+          } else {
+            await addDoc(collection(db, 'siratStories'), { ...payload, createdAt: serverTimestamp() });
+            setNotice('নতুন কাহিনি সফলভাবে প্রকাশিত হয়েছে!');
+          }
+          resetStoryForm();
+          await loadAllAdminData();
+        } catch(e) {
+          setNotice('সংরক্ষণ ব্যর্থ: ' + e.message, true);
+        }
+      };
+
+      function renderStoriesAdminList() {
+        const box = document.getElementById('adminStoriesList');
+        if(!box) return;
+        box.innerHTML = storiesData.length ? storiesData.map(s => `
+          <div class="flex items-center justify-between gap-2 p-3 rounded-xl bg-black/30 border border-emerald-700/40">
+            <span class="text-sm font-semibold text-white truncate flex-1">${esc(s.title)}</span>
+            <div class="flex gap-1.5 shrink-0">
+              <button onclick="editStory('${s.id}')" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 rounded-lg text-xs font-bold text-white transition">এডিট</button>
+              <button onclick="deleteStory('${s.id}')" class="px-3 py-1.5 bg-red-700 hover:bg-red-600 rounded-lg text-xs font-bold text-white transition">ডিলিট</button>
+            </div>
+          </div>
+        `).join('') : '<p class="text-xs text-emerald-300">কোনো কাহিনি নেই।</p>';
+      }
+
+      window.editStory = (id) => {
+        const item = storiesData.find(x => x.id === id);
+        if(!item) return;
+        editingStoryId = id;
+        document.getElementById('storyTitleInput').value = item.title || '';
+        document.getElementById('storyBodyInput').value = item.body || '';
+        document.getElementById('storySaveBtn').innerHTML = `<i data-lucide="save" class="w-4 h-4"></i> পরিবর্তন সংরক্ষণ করুন`;
+        document.getElementById('storyFormTitle').textContent = "কাহিনি সম্পাদনা করুন";
+        document.getElementById('storyTitleInput').scrollIntoView({ behavior: 'smooth' });
+        lucide.createIcons();
+      };
+
+      window.deleteStory = async (id) => {
+        if(!confirm('এই কাহিনিটি কি মুছে ফেলতে চান? এটি ইউজার অ্যাপ থেকেও মুছে যাবে।')) return;
+        try {
+          await deleteDoc(doc(db, 'siratStories', id));
+          setNotice('কাহিনি মুছে ফেলা হয়েছে।');
+          loadAllAdminData();
+        } catch(e) {
+          setNotice('মুছতে সমস্যা: ' + e.message, true);
+        }
+      };
+
+      window.resetStoryForm = () => {
+        editingStoryId = null;
+        document.getElementById('storyTitleInput').value = '';
+        document.getElementById('storyBodyInput').value = '';
+        document.getElementById('storySaveBtn').innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> কাহিনি প্রকাশ করুন`;
+        document.getElementById('storyFormTitle').textContent = "নতুন কাহিনি লিখুন";
+        lucide.createIcons();
+      };
+
+      // ================= ৫. ভিডিও ম্যানেজমেন্ট =================
+      window.saveVideo = async () => {
+        const title = document.getElementById('videoTitleInput').value.trim();
+        const url   = document.getElementById('videoUrlInput').value.trim();
+        if(!title || !url) return setNotice('ভিডিওর শিরোনাম ও লিংক প্রদান করুন!', true);
+
+        try {
+          const payload = { title, url, published: true, updatedAt: serverTimestamp() };
+          if(editingVideoId) {
+            await updateDoc(doc(db, 'siratVideos', editingVideoId), payload);
+            setNotice('ভিডিও সফলভাবে আপডেট হয়েছে!');
+          } else {
+            await addDoc(collection(db, 'siratVideos'), { ...payload, createdAt: serverTimestamp() });
+            setNotice('নতুন ভিডিও সফলভাবে যুক্ত হয়েছে!');
+          }
+          resetVideoForm();
+          await loadAllAdminData();
+        } catch(e) {
+          setNotice('ভিডিও সেভ হয়নি: ' + e.message, true);
+        }
+      };
+
+      function renderVideosAdminList() {
+        const box = document.getElementById('adminVideosList');
+        if(!box) return;
+        box.innerHTML = videosData.length ? videosData.map(v => `
+          <div class="flex items-center justify-between gap-2 p-3 rounded-xl bg-black/30 border border-emerald-700/40">
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-semibold text-amber-200 truncate">${esc(v.title)}</div>
+              <div class="text-xs text-emerald-300 truncate">${esc(v.url)}</div>
+            </div>
+            <div class="flex gap-1.5 shrink-0">
+              <button onclick="editVideo('${v.id}')" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 rounded-lg text-xs font-bold text-white transition">এডিট</button>
+              <button onclick="deleteVideo('${v.id}')" class="px-3 py-1.5 bg-red-700 hover:bg-red-600 rounded-lg text-xs font-bold text-white transition">ডিলিট</button>
+            </div>
+          </div>
+        `).join('') : '<p class="text-xs text-emerald-300">কোনো ভিডিও নেই।</p>';
+      }
+
+      window.editVideo = (id) => {
+        const item = videosData.find(x => x.id === id);
+        if(!item) return;
+        editingVideoId = id;
+        document.getElementById('videoTitleInput').value = item.title || '';
+        document.getElementById('videoUrlInput').value = item.url || '';
+        document.getElementById('videoSaveBtn').innerHTML = `<i data-lucide="save" class="w-4 h-4"></i> পরিবর্তন সংরক্ষণ করুন`;
+        document.getElementById('videoFormTitle').textContent = "ভিডিও সম্পাদনা করুন";
+        document.getElementById('videoTitleInput').scrollIntoView({ behavior: 'smooth' });
+        lucide.createIcons();
+      };
+
+      window.deleteVideo = async (id) => {
+        if(!confirm('এই ভিডিওটি কি মুছে ফেলতে চান?')) return;
+        try {
+          await deleteDoc(doc(db, 'siratVideos', id));
+          setNotice('ভিডিও মুছে ফেলা হয়েছে।');
+          loadAllAdminData();
+        } catch(e) {
+          setNotice('মুছতে সমস্যা: ' + e.message, true);
+        }
+      };
+
+      window.resetVideoForm = () => {
+        editingVideoId = null;
+        document.getElementById('videoTitleInput').value = '';
+        document.getElementById('videoUrlInput').value = '';
+        document.getElementById('videoSaveBtn').innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> ভিডিও সেভ করুন`;
+        document.getElementById('videoFormTitle').textContent = "নতুন ভিডিও যোগ করুন";
+        lucide.createIcons();
+      };
+
+      // ================= ৬. ফায়ারবেস অথেন্টিকেশন লিসেনার =================
+      onAuthStateChanged(auth, (user) => {
+        if(user && (user.email || '').toLowerCase() === TARGET_ADMIN_EMAIL.toLowerCase()) {
+          currentAdminUser = user;
+          document.getElementById('adminAuthGate').classList.add('hidden');
+          document.getElementById('adminMainDashboard').classList.remove('hidden');
+          loadAllAdminData();
+        } else {
+          currentAdminUser = null;
+          document.getElementById('adminAuthGate').classList.remove('hidden');
+          document.getElementById('adminMainDashboard').classList.add('hidden');
+        }
+        lucide.createIcons();
+      });
+
+      window.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons();
+      });
+    </script>
+</body>
+</html>
